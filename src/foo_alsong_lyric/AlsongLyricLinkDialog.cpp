@@ -54,6 +54,10 @@ void AlsongLyricLinkDialog::PopulateListView()
 	Lyric *lrc = m_searchresult->Get();
 	int n = 0;
 	ListView_DeleteAllItems(hListView);
+	////////////////////////////////////////////////////////////
+	// MessageBox(NULL, L"앙 기모띠", L"", 0);
+
+	
 	do
 	{
 		std::wstring artist = pfc::stringcvt::string_wide_from_utf8(lrc->GetArtist().c_str()).get_ptr();
@@ -70,6 +74,7 @@ void AlsongLyricLinkDialog::PopulateListView()
 		item.pszText = const_cast<WCHAR *>(title.c_str());
 		ListView_SetItem(hListView, &item);
 	}while((lrc = m_searchresult->Get()), lrc->HasLyric());
+	
 }
 
 UINT CALLBACK AlsongLyricLinkDialog::LyricModifyDialogProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
@@ -151,6 +156,7 @@ UINT AlsongLyricLinkDialog::DialogProc(UINT iMessage, WPARAM wParam, LPARAM lPar
 			{
 			case IDC_SEARCH:
 				{
+					// 검색버튼실행시
 					pfc::string8 artist;
 					uGetDlgItemText(m_hWnd, IDC_ARTIST, artist);
 					pfc::string8 title;
@@ -167,6 +173,7 @@ UINT AlsongLyricLinkDialog::DialogProc(UINT iMessage, WPARAM wParam, LPARAM lPar
 					}
 
 					m_page = 0;
+					// 갯수 갖고오기
 					m_lyriccount = LyricSourceAlsong().SearchLyricGetCount(artist.toString(), title.toString());
 					std::stringstream str;
 					str << m_page * 100 + 1 << "~" << min(m_lyriccount, (m_page + 1) * 100) << "/" << m_lyriccount;
@@ -184,7 +191,12 @@ UINT AlsongLyricLinkDialog::DialogProc(UINT iMessage, WPARAM wParam, LPARAM lPar
 					item.pszText = L"잠시 기다려 주세요";
 					ListView_SetItem(hListView, &item);
 
-					m_searchresult = LyricSourceAlsong().SearchLyric(artist.toString(), title.toString(), 0);
+					// 가사 갖고오기
+					m_searchresult = LyricSourceAlsong().SearchLyric(artist.toString(), title.toString(), 1);
+
+					//int sa = m_searchresult.
+
+					
 					PopulateListView();
 					SetWindowLong(GetDlgItem(m_hWnd, IDC_PREV), GWL_STYLE, GetWindowLong(GetDlgItem(m_hWnd, IDC_PREV), GWL_STYLE) | WS_DISABLED);
 					if(m_lyriccount > 100)

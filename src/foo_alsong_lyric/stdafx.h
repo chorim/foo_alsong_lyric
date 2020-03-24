@@ -36,6 +36,7 @@
 #include <exception>
 #include <typeinfo>
 #define BOOST_BIND_ENABLE_STDCALL
+
 #include <boost/bind.hpp>
 #include <boost/signals2.hpp>
 #include <boost/thread.hpp>

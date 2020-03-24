@@ -22,19 +22,26 @@
 LyricSearchResultAlsong::LyricSearchResultAlsong(boost::shared_ptr<pugi::xml_document> data)
 {
 	m_Document = data;
-	m_LyricNode = m_Document->first_element_by_path("soap:Envelope/soap:Body/GetResembleLyric2Response/GetResembleLyric2Result/ST_GET_RESEMBLELYRIC2_RETURN"); //TODO: Test
+	//m_LyricNode = m_Document->first_element_by_path("soap:Envelope/soap:Body/GetResembleLyric2Response/GetResembleLyric2Result/ST_GET_RESEMBLELYRIC2_RETURN"); //TODO: Test
+	m_LyricNode = m_Document->first_element_by_path("soap:Envelope/soap:Body/GetResembleLyricList2Response/GetResembleLyricList2Result/ST_SEARCHLYRIC_LIST");
 	m_LyricResultMap[-1] = AlsongLyric();
+	
 }
 
 Lyric *LyricSearchResultAlsong::Get()
 {
-	if(!m_LyricNode)
+	if(!m_LyricNode) {
+		MessageBox(NULL, L"데이터가 없서용 헷;", L"테스트", MB_OK);
 		return &m_LyricResultMap.find(-1)->second; //invalid item
+	}
 
 	AlsongLyric ret(m_LyricNode);
-	m_LyricNode = m_LyricNode.next_sibling("ST_GET_RESEMBLELYRIC2_RETURN");
+	//m_LyricNode = m_LyricNode.next_sibling("ST_GET_RESEMBLELYRIC2_RETURN");
+	//
+	//    GetResembleLyricList2Result : [ST_SEARCHLYRIC_LIST,ST_SEARCHLYRIC_LIST,...]
+	m_LyricNode = m_LyricNode.next_sibling("ST_SEARCHLYRIC_LIST");
 	m_LyricResultMap[ret.GetInternalID()] = ret;
-
+	
 	return dynamic_cast<Lyric *>(&m_LyricResultMap.find(ret.GetInternalID())->second);
 }
 

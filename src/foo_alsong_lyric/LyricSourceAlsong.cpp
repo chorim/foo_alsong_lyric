@@ -209,6 +209,8 @@ boost::shared_ptr<Lyric> LyricSourceAlsong::Get(const metadb_handle_ptr &track)
 
 	gethostname(Hostname, 80);
 	host = gethostbyname(Hostname);
+	//3232235521; // security 192.168.0.1
+	//host = gethostbyname("localhost");
 
 	struct in_addr addr;
 	if(host == NULL)
@@ -221,7 +223,7 @@ boost::shared_ptr<Lyric> LyricSourceAlsong::Get(const metadb_handle_ptr &track)
 
 	GetAdaptersInfo(AdapterInfo, &dwBufLen);
 	PIP_ADAPTER_INFO pAdapterInfo = AdapterInfo;
-
+	/*
 	while(pAdapterInfo) 
 	{
 		if(!lstrcmpA(pAdapterInfo->IpAddressList.IpAddress.String, Local_IP))
@@ -239,15 +241,31 @@ boost::shared_ptr<Lyric> LyricSourceAlsong::Get(const metadb_handle_ptr &track)
 		Local_Mac[i + 1] = HexArray[pAdapterInfo->Address[i / 2] & 0x0f];
 	}
 	Local_Mac[i] = 0;
+	// "00"-"50"-"56"-"C0"-"00"-"08" // security
+
+	//Local_Mac
+	*/
+	char Local_Mac2[] = "005056C00008";
+
 
 	CHAR Hash[50];
 	GetFileHash(track, Hash);
 
 	SoapHelper helper;
+	/*
 	helper.SetMethod("ns1:GetLyric5");
+	
 	helper.AddParameter("ns1:strChecksum", Hash);
 	helper.AddParameter("ns1:strVersion", ALSONG_VERSION);
 	helper.AddParameter("ns1:strMACAddress", Local_Mac);
+	helper.AddParameter("ns1:strIPAddress", Local_IP);
+	*/
+	helper.SetMethod("ns1:GetLyric7");
+	
+	//helper.AddParameter("ns1:encData", DUMMY_KEY);
+	helper.AddParameter("ns1:strChecksum", Hash);
+	helper.AddParameter("ns1:strVersion", "3.47");
+	helper.AddParameter("ns1:strMACAddress", Local_Mac2);
 	helper.AddParameter("ns1:strIPAddress", Local_IP);
 
 	if(boost::this_thread::interruption_requested())
@@ -255,7 +273,7 @@ boost::shared_ptr<Lyric> LyricSourceAlsong::Get(const metadb_handle_ptr &track)
 
 	try
 	{
-		return boost::shared_ptr<Lyric>(new AlsongLyric(helper.Execute()->first_element_by_path("soap:Envelope/soap:Body/GetLyric5Response/GetLyric5Result")));
+		return boost::shared_ptr<Lyric>(new AlsongLyric(helper.Execute(true)->first_element_by_path("soap:Envelope/soap:Body/GetLyric7Response/GetLyric7Result")));
 	}
 	catch(...)
 	{
@@ -365,17 +383,21 @@ DWORD LyricSourceAlsong::Save(const metadb_handle_ptr &track, Lyric &lyric)
 boost::shared_ptr<LyricSearchResult> LyricSourceAlsong::SearchLyric(const std::string &Artist, const std::string Title, int nPage)
 {
 	SoapHelper helper;
-	helper.SetMethod("ns1:GetResembleLyric2");
-	helper.AddParameter("ns1:strTitle", Title.c_str());
-	helper.AddParameter("ns1:strArtistName", Artist.c_str());
-	helper.AddParameter("ns1:nCurPage", boost::lexical_cast<std::string>(nPage).c_str());
-
+	helper.SetMethod("ns1:GetResembleLyricList2");
+	// Dummy Data!  
+	helper.AddParameter("ns1:encData", DUMMY_KEY);
+	helper.AddParameter("ns1:title", Title.c_str());
+	helper.AddParameter("ns1:artist", Artist.c_str());
+	nPage = 1;
+	helper.AddParameter("ns1:pageNo", boost::lexical_cast<std::string>(nPage).c_str());
+	
 	try
 	{
 		return boost::shared_ptr<LyricSearchResult>(new LyricSearchResultAlsong(helper.Execute()));
 	}
 	catch(...)
 	{
+		MessageBox(NULL, L"뭐지;", L"테스트", MB_OK);
 		return boost::shared_ptr<LyricSearchResult>();
 	}
 }
